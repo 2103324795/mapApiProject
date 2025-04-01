@@ -499,5 +499,9 @@ def direct_weather():
     response = requests.get(url, params=params)
     return jsonify(response.json())
 
+# 为Vercel serverless部署准备好app对象
+app.config['JSON_AS_ASCII'] = False
+
+# 本地运行代码
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
