@@ -1,44 +1,60 @@
-from flask import Flask, render_template, jsonify, request
-import os
-import requests
-from dotenv import load_dotenv
+# 纯净的Vercel函数 - 不依赖Flask
+import json
 
-# 加载环境变量
-load_dotenv()
-
-# 创建简化版的Flask应用 - 专为Vercel设计
-app = Flask(__name__, static_folder='../static', template_folder='../templates')
-
-# Vercel必须的配置
-app.config['JSON_AS_ASCII'] = False
-
-# 获取API密钥（Vercel环境变量）
-AMAP_KEY = os.getenv('AMAP_KEY', '46f8aebbd7c81272533debc531a7bfbd')
-
-@app.route('/')
-def index():
-    """首页"""
-    return render_template('index.html')
-
-@app.route('/search_poi', methods=['POST'])
-def search_poi():
-    """核心功能：POI搜索"""
-    data = request.json
-    keywords = data.get('keywords', '')
-    location = data.get('location', '')
-    
-    # 调用高德API
-    url = "https://restapi.amap.com/v3/place/around"
-    params = {
-        'key': AMAP_KEY,
-        'keywords': keywords,
-        'location': location,
-        'radius': 3000,
-        'output': 'json'
+def handler(event, context):
+    """处理Vercel的请求的函数"""
+    # 返回内容
+    return {
+        "statusCode": 200,
+        "headers": {
+            "Content-Type": "text/html"
+        },
+        "body": """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>高德地图测试</title>
+            <meta charset="UTF-8">
+            <style>
+                body { 
+                    font-family: Arial, sans-serif; 
+                    text-align: center;
+                    margin: 0;
+                    padding: 0;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    color: white;
+                }
+                h1 { 
+                    font-size: 2.5rem; 
+                    margin-bottom: 1rem;
+                    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                }
+                p { 
+                    font-size: 1.2rem; 
+                    margin-bottom: 2rem;
+                }
+                .success {
+                    background-color: rgba(255, 255, 255, 0.2);
+                    padding: 20px;
+                    border-radius: 10px;
+                    backdrop-filter: blur(10px);
+                    margin-top: 20px;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>部署成功！</h1>
+            <div class="success">
+                <p>恭喜，你的Vercel函数已经成功部署！</p>
+                <p>这是一个极简版本，用于测试Vercel能否正常工作。</p>
+                <p>下一步，我们可以逐步添加地图功能。</p>
+            </div>
+        </body>
+        </html>
+        """
     }
-    
-    response = requests.get(url, params=params)
-    return jsonify(response.json())
-
-# Vercel需要的入口点
-handler = app
