@@ -2,8 +2,8 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/index.py",
-      "use": "@vercel/python"
+      "src": "*.html",
+      "use": "@vercel/static"
     },
     {
       "src": "static/**",
@@ -16,8 +16,11 @@
       "dest": "/static/$1"
     },
     {
+      "handle": "filesystem"
+    },
+    {
       "src": "/(.*)",
-      "dest": "/api/index.py"
+      "dest": "/index.html"
     }
   ],
   "env": {
