@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>地点间POI查询 - 纯前端版</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap">
+    <title>地点间POI查询 - 超级简化版</title>
     <style>
         * {
             box-sizing: border-box;
@@ -13,7 +12,7 @@
         }
         
         body {
-            font-family: 'Noto Sans SC', Arial, sans-serif;
+            font-family: Arial, sans-serif;
             line-height: 1.6;
             min-height: 100vh;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -39,18 +38,6 @@
             color: #3498db;
             margin-bottom: 25px;
             font-size: 2.2rem;
-            font-weight: 700;
-            position: relative;
-        }
-        
-        h1:after {
-            content: '';
-            display: block;
-            width: 50px;
-            height: 4px;
-            background: #3498db;
-            margin: 10px auto 0;
-            border-radius: 2px;
         }
         
         .form-group {
@@ -70,15 +57,6 @@
             border: 1px solid #ddd;
             border-radius: 8px;
             font-size: 16px;
-            transition: all 0.3s;
-            background-color: #f9f9f9;
-        }
-        
-        input:focus, select:focus {
-            outline: none;
-            border-color: #3498db;
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-            background-color: #fff;
         }
         
         button {
@@ -92,73 +70,11 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 1px;
             margin-top: 10px;
         }
         
         button:hover {
             background-color: #2980b9;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        button:active {
-            transform: translateY(0);
-        }
-        
-        .examples {
-            margin-top: 30px;
-        }
-        
-        .examples h3 {
-            font-size: 1.2rem;
-            color: #7f8c8d;
-            margin-bottom: 15px;
-            padding-bottom: 5px;
-            border-bottom: 1px solid #ecf0f1;
-        }
-        
-        .example-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        
-        .example-item {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            flex: 1;
-            min-width: 200px;
-        }
-        
-        .example-item:hover {
-            background-color: rgba(236, 240, 241, 0.9);
-            transform: translateX(5px);
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        .example-item p {
-            margin: 5px 0;
-        }
-        
-        .example-item strong {
-            color: #34495e;
-            font-weight: 600;
-        }
-        
-        #map-container {
-            width: 100%;
-            max-width: 800px;
-            height: 500px;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-            display: none;
         }
         
         #result-container {
@@ -170,19 +86,6 @@
             padding: 30px;
             margin-top: 20px;
             display: none;
-        }
-        
-        .poi-item {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            transition: all 0.3s;
-        }
-        
-        .poi-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
         
         .loading {
@@ -204,6 +107,24 @@
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        
+        .poi-item {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #3498db;
+        }
+        
+        #map-link {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        #map-link a {
+            color: #3498db;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -239,79 +160,29 @@
         
         <button type="button" id="search-button">查询</button>
         
-        <div class="examples">
-            <h3>示例查询:</h3>
-            <div class="example-container">
-                <div class="example-item" data-location1="北京西站" data-location2="天安门" data-poi="咖啡馆">
-                    <p><strong>地点1:</strong> 北京西站</p>
-                    <p><strong>地点2:</strong> 天安门</p>
-                    <p><strong>场所类型:</strong> 咖啡馆</p>
-                </div>
-                <div class="example-item" data-location1="上海虹桥站" data-location2="外滩" data-poi="商场">
-                    <p><strong>地点1:</strong> 上海虹桥站</p>
-                    <p><strong>地点2:</strong> 外滩</p>
-                    <p><strong>场所类型:</strong> 商场</p>
-                </div>
-            </div>
-        </div>
-        
         <div class="loading">
             <div class="spinner"></div>
             <p>加载中，请稍候...</p>
         </div>
     </div>
     
-    <div id="map-container"></div>
-    
     <div id="result-container">
         <h2 id="result-title">搜索结果</h2>
+        <div id="map-link"></div>
         <div id="poi-list"></div>
     </div>
 
-    <!-- 高德地图API -->
-    <script src="https://webapi.amap.com/maps?v=2.0&key=46f8aebbd7c81272533debc531a7bfbd"></script>
     <script>
         // 全局变量
-        let map = null;
-        let markers = [];
+        let geoLocation1 = null;
+        let geoLocation2 = null;
+        let centerPoint = null;
         
         // 初始化页面
         document.addEventListener('DOMContentLoaded', function() {
-            // 初始化地图
-            initMap();
-            
             // 绑定搜索按钮
             document.getElementById('search-button').addEventListener('click', searchPOIs);
-            
-            // 绑定示例数据点击事件
-            const examples = document.querySelectorAll('.example-item');
-            examples.forEach(item => {
-                item.addEventListener('click', function() {
-                    document.getElementById('location1').value = this.dataset.location1;
-                    document.getElementById('location2').value = this.dataset.location2;
-                    document.getElementById('poi_type').value = this.dataset.poi;
-                });
-            });
         });
-        
-        // 初始化地图 - 简化版本
-        function initMap() {
-            // 创建基础地图实例
-            map = new AMap.Map('map-container', {
-                zoom: 11,
-                center: [116.397428, 39.90923],  // 默认北京中心
-                viewMode: '2D'  // 改为2D模式，提高兼容性
-            });
-            
-            // 简化控件添加
-            try {
-                map.plugin(['AMap.ToolBar'], function() {
-                    map.addControl(new AMap.ToolBar());
-                });
-            } catch (e) {
-                console.error('添加地图控件失败:', e);
-            }
-        }
         
         // 搜索POIs
         async function searchPOIs() {
@@ -331,15 +202,15 @@
             
             try {
                 // 1. 获取两个地点的坐标
-                const point1 = await getLocationGeo(location1);
-                const point2 = await getLocationGeo(location2);
+                geoLocation1 = await getLocationGeo(location1);
+                geoLocation2 = await getLocationGeo(location2);
                 
-                if (!point1 || !point2) {
+                if (!geoLocation1 || !geoLocation2) {
                     throw new Error('无法获取地点坐标，请确认地点名称正确。');
                 }
                 
                 // 2. 计算中心点
-                const centerPoint = calculateCenterPoint(point1, point2);
+                centerPoint = calculateCenterPoint(geoLocation1, geoLocation2);
                 
                 // 3. 在中心点周围搜索POI
                 const pois = await searchPOIsAround(centerPoint, poiType);
@@ -353,8 +224,8 @@
                         };
                         
                         // 计算公交时间
-                        const transitTime1 = await calculateTransitTime(point1, poiPoint);
-                        const transitTime2 = await calculateTransitTime(point2, poiPoint);
+                        const transitTime1 = await calculateTransitTime(geoLocation1, poiPoint);
+                        const transitTime2 = await calculateTransitTime(geoLocation2, poiPoint);
                         
                         return {
                             ...poi,
@@ -364,8 +235,8 @@
                     })
                 );
                 
-                // 5. 显示结果
-                displayResults(point1, point2, poisWithTransitTime, location1, location2);
+                // 5. 显示结果，但不使用地图组件
+                displayTextResults(location1, location2, poisWithTransitTime);
                 
             } catch (error) {
                 alert('搜索出错: ' + error.message);
@@ -440,97 +311,20 @@
             }
         }
         
-        // 显示结果
-        function displayResults(point1, point2, pois, location1Name, location2Name) {
-            // 清除之前的标记
-            clearMarkers();
-            
-            // 设置地图可见
-            document.getElementById('map-container').style.display = 'block';
+        // 显示文本结果（不使用地图）
+        function displayTextResults(location1Name, location2Name, pois) {
             document.getElementById('result-container').style.display = 'block';
             
             // 更新结果标题
             document.getElementById('result-title').textContent = 
                 `${location1Name} 和 ${location2Name} 之间的 ${document.getElementById('poi_type').value} (${pois.length}个结果)`;
             
-            // 显示地图并添加标记
-            map.setCenter([point1.longitude, point1.latitude]);
-            map.setZoom(12);
-            
-            // 添加起点标记
-            addMarker(point1, 'A', location1Name);
-            
-            // 添加终点标记
-            addMarker(point2, 'B', location2Name);
-            
-            // 添加POI标记
-            pois.forEach((poi, index) => {
-                const position = poi.location.split(',');
-                const poiPoint = {
-                    longitude: parseFloat(position[0]),
-                    latitude: parseFloat(position[1])
-                };
-                
-                addMarker(
-                    poiPoint, 
-                    (index + 1).toString(), 
-                    poi.name,
-                    null,
-                    `<div>
-                        <h3>${poi.name}</h3>
-                        <p>地址: ${poi.address || '未知'}</p>
-                        <p>类型: ${poi.type || document.getElementById('poi_type').value}</p>
-                        <p>从 ${location1Name} 乘坐公交所需时间: ${poi.transitTime1} 分钟</p>
-                        <p>从 ${location2Name} 乘坐公交所需时间: ${poi.transitTime2} 分钟</p>
-                    </div>`
-                );
-            });
-            
-            // 调整地图视野以包含所有标记点
-            map.setFitView();
+            // 添加地图链接
+            const mapLinkElem = document.getElementById('map-link');
+            mapLinkElem.innerHTML = `<a href="https://www.amap.com/place/${centerPoint.longitude},${centerPoint.latitude}" target="_blank">在高德地图中查看完整地图</a>`;
             
             // 显示POI列表
             displayPOIList(pois, location1Name, location2Name);
-        }
-        
-        // 添加标记 - 超级简化版
-        function addMarker(position, label, title, iconFile, content) {
-            try {
-                // 极简化版标记
-                const marker = new AMap.Marker({
-                    position: [position.longitude, position.latitude],
-                    title: title,
-                    content: `<div style="background-color: ${label === 'A' ? '#3498db' : label === 'B' ? '#e74c3c' : '#f39c12'}; color: white; border-radius: 50%; width: 24px; height: 24px; line-height: 24px; text-align: center; font-weight: bold;">${label}</div>`,
-                    anchor: 'center'
-                });
-                
-                // 如果有内容，添加信息窗口
-                if (content) {
-                    marker.content = content; // 存储内容到标记上
-                    
-                    marker.on('click', function() {
-                        // 直接创建信息窗口，不预先创建
-                        const infoWindow = new AMap.InfoWindow({
-                            content: this.content,
-                            anchor: 'bottom-center'
-                        });
-                        infoWindow.open(map, this.getPosition());
-                    });
-                }
-                
-                marker.setMap(map);
-                markers.push(marker);
-            } catch (e) {
-                console.error('创建标记失败:', e);
-            }
-        }
-        
-        // 清除所有标记
-        function clearMarkers() {
-            markers.forEach(marker => {
-                marker.setMap(null);
-            });
-            markers = [];
         }
         
         // 显示POI列表
@@ -551,18 +345,8 @@
                     <p>地址: ${poi.address || '未知'}</p>
                     <p>从 ${location1Name} 乘坐公交所需时间: ${poi.transitTime1} 分钟</p>
                     <p>从 ${location2Name} 乘坐公交所需时间: ${poi.transitTime2} 分钟</p>
+                    <p><a href="https://www.amap.com/place/${poi.location}" target="_blank">在高德地图中查看</a></p>
                 `;
-                
-                poiItem.addEventListener('click', function() {
-                    // 点击POI项目时，触发地图上对应标记的点击事件
-                    if (markers[index + 2]) { // +2 是因为前两个标记是起点和终点
-                        const position = markers[index + 2].getPosition();
-                        map.setCenter(position);
-                        map.setZoom(14);
-                        // 模拟点击标记
-                        AMap.event.trigger(markers[index + 2], 'click');
-                    }
-                });
                 
                 poiListContainer.appendChild(poiItem);
             });
