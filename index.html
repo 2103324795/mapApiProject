@@ -454,10 +454,10 @@
             map.setZoom(12);
             
             // 添加起点标记
-            addMarker(point1, 'A', location1Name, 'marker_start.svg');
+            addMarker(point1, 'A', location1Name);
             
             // 添加终点标记
-            addMarker(point2, 'B', location2Name, 'marker_end.svg');
+            addMarker(point2, 'B', location2Name);
             
             // 添加POI标记
             pois.forEach((poi, index) => {
@@ -471,7 +471,7 @@
                     poiPoint, 
                     (index + 1).toString(), 
                     poi.name,
-                    'marker_poi.svg',
+                    null,
                     `<div>
                         <h3>${poi.name}</h3>
                         <p>地址: ${poi.address || '未知'}</p>
@@ -491,12 +491,24 @@
         
         // 添加标记
         function addMarker(position, label, title, iconFile, content) {
+            // 创建标记对象
             const marker = new AMap.Marker({
                 position: [position.longitude, position.latitude],
                 title: title,
                 label: {
                     content: label,
-                    direction: 'center'
+                    direction: 'center',
+                    offset: new AMap.Pixel(0, 0),
+                    style: {
+                        color: '#fff',
+                        backgroundColor: label === 'A' ? '#3498db' : 
+                                         label === 'B' ? '#e74c3c' : '#f39c12',
+                        border: '0',
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        padding: '4px 8px',
+                        borderRadius: '50%'
+                    }
                 }
             });
             
