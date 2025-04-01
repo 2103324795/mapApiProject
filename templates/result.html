@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>查询结果 - {{ location1 }}和{{ location2 }}之间的{{ poi_type }}</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+            overflow: hidden;
+        }
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+        .header {
+            background-color: #1976d2;
+            color: white;
+            padding: 10px 20px;
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            margin: 0;
+            font-size: 18px;
+        }
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        .sidebar {
+            width: 350px;
+            background-color: white;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            z-index: 5;
+        }
+        .search-box {
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-bottom: 1px solid #eee;
+        }
+        .search-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .poi-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+        .poi-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .poi-item:hover {
+            background-color: #f5f9ff;
+        }
+        .poi-item.active {
+            background-color: #e3f2fd;
+            border-left: 4px solid #1976d2;
+            padding-left: 11px;
+        }
+        .poi-name {
+            font-weight: bold;
+            font-size: 16px;
+            color: #1976d2;
+            margin-bottom: 5px;
+        }
+        .poi-address, .poi-tel, .poi-distance {
+            margin: 4px 0;
+            font-size: 13px;
+            color: #666;
+        }
+        .poi-distance {
+            color: #ff6e40;
+            font-weight: bold;
+        }
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        .info-window {
+            padding: 10px;
+            max-width: 300px;
+        }
+        .info-window h3 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+        .amap-marker-label {
+            border: 1px solid #ddd;
+            background-color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .footer {
+            padding: 10px;
+            text-align: center;
+            background-color: #f9f9f9;
+            border-top: 1px solid #eee;
+        }
+        .back-button {
+            display: inline-block;
+            background-color: #1976d2;
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .back-button:hover {
+            background-color: #1565c0;
+        }
+        .no-results {
+            padding: 30px 15px;
+            text-align: center;
+            color: #666;
+        }
+        .location-info {
+            display: flex;
+            padding: 10px 15px;
+            background-color: #f5f5f5;
+            border-bottom: 1px solid #eee;
+        }
+        .location-item {
+            flex: 1;
+            padding: 5px;
+        }
+        .location-label {
+            font-size: 12px;
+            color: #666;
+        }
+        .location-name {
+            font-weight: bold;
+            color: #333;
+        }
+        .toggle-sidebar {
+            position: absolute;
+            top: 50%;
+            left: 350px;
+            transform: translateY(-50%);
+            background-color: white;
+            border: 1px solid #ddd;
+            border-left: none;
+            border-radius: 0 4px 4px 0;
+            width: 20px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 6;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        .toggle-icon {
+            border: solid #666;
+            border-width: 0 2px 2px 0;
+            display: inline-block;
+            padding: 3px;
+            transform: rotate(135deg);
+        }
+        .sidebar-collapsed .toggle-icon {
+            transform: rotate(-45deg);
+        }
+        .sidebar-collapsed .sidebar {
+            margin-left: -350px;
+        }
+        .sidebar-collapsed .toggle-sidebar {
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <h1>{{ location1 }}和{{ location2 }}之间的{{ poi_type }}</h1>
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="location-info">
+                    <div class="location-item">
+                        <div class="location-label">起点</div>
+                        <div class="location-name">{{ location1 }}</div>
+                    </div>
+                    <div class="location-item">
+                        <div class="location-label">终点</div>
+                        <div class="location-name">{{ location2 }}</div>
+                    </div>
+                </div>
+                
+                <div class="search-box">
+                    <input type="text" class="search-input" placeholder="搜索{{ poi_type }}..." id="poi-search">
+                </div>
+                
+                <div class="poi-list">
+                    {% if pois and pois|length > 0 %}
+                        {% for poi in pois %}
+                            <div class="poi-item" data-poi-id="{{ loop.index }}">
+                                <div class="poi-name">{{ poi.name }}</div>
+                                <div class="poi-address">地址：{{ poi.address }}</div>
+                                {% if poi.tel %}
+                                    <div class="poi-tel">电话：{{ poi.tel }}</div>
+                                {% endif %}
+                                <div class="poi-distance">
+                                    <div>从{{ location1 }}乘坐公交/地铁到这里：<b>{{ poi.time_to_location1 }}分钟</b></div>
+                                    <div>从{{ location2 }}乘坐公交/地铁到这里：<b>{{ poi.time_to_location2 }}分钟</b></div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-results">
+                            <p>抱歉，在{{ location1 }}和{{ location2 }}之间没有找到{{ poi_type }}。</p>
+                            <p>请尝试其他场所类型或扩大搜索范围。</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="footer">
+                    <a href="/" class="back-button">返回首页</a>
+                </div>
+            </div>
+            
+            <div class="toggle-sidebar">
+                <span class="toggle-icon"></span>
+            </div>
+            
+            <div class="map-container">
+                <div id="map"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode: ''
+        }
+    </script>
+    <script type="text/javascript">
+        window._AMapSecurityConfig = { securityJsCode: '{{ amap_key }}' };
+    </script>
+    <script type="text/javascript" src="https://webapi.amap.com/maps?v=1.4.15&key={{ amap_key }}&plugin=AMap.Driving,AMap.Walking,AMap.ToolBar,AMap.Scale,AMap.HawkEye,AMap.MapType,AMap.DistrictSearch,AMap.PlaceSearch,AMap.IndoorMap,AMap.Geolocation,AMap.AdvancedInfoWindow,AMap.Weather,AMap.Traffic,AMap.ControlBar,AMap.RangingTool,AMap.MarkerCluster,AMap.MouseTool,AMap.CitySearch"></script>
+    <script>
+        // 初始化地图 - 1.4.15版本适配
+        var map = new AMap.Map('map', {
+            zoom: 15,  // 使用更大缩放比例
+            resizeEnable: true,
+            expandZoomRange: true,
+            doubleClickZoom: true,     // 双击放大
+            keyboardEnable: true,      // 键盘控制
+            jogEnable: true,           // 平移缓动
+            scrollWheel: true,         // 滚轮缩放
+            dragEnable: true,          // 拖拽移动
+            isHotspot: true,           // 热点查询
+            mapStyle: 'normal',        // 普通样式
+            buildingAnimation: true,   // 建筑物动画
+            showIndoorMap: true,       // 室内地图
+            showBuildingBlock: true,   // 显示楼块
+            labelzIndex: 120,          // 标注层级
+            features: ['bg', 'road', 'building', 'point', 'label'],  // 增加label特性显示道路名称
+            mapStyle: 'normal',  // 使用普通样式，显示更多POI
+            pitch: 0  // 先保持水平视角，显示更多标签
+        });
+        
+        // 添加各种控件，使地图更完整
+        map.plugin([
+            'AMap.ToolBar', 
+            'AMap.Scale', 
+            'AMap.MapType',
+            'AMap.Geolocation',
+            'AMap.HawkEye',
+            'AMap.AdvancedInfoWindow',
+            'AMap.PlaceSearch',
+            'AMap.Traffic',
+            'AMap.ControlBar',
+            'AMap.RangingTool',
+            'AMap.Weather',
+            'AMap.IndoorMap',
+            'AMap.CitySearch',
+            'AMap.Buildings',
+            'AMap.DistrictSearch'
+        ], function(){
+            // 开启建筑物显示
+            var buildings = new AMap.Buildings({
+                zooms: [16, 18],
+                zIndex: 10,
+                heightFactor: 2
+            });
+            buildings.setMap(map);
+            
+            // 增强标签显示
+            map.setFeatures(['bg', 'road', 'building', 'point']);
+            // 添加工具栏
+            map.addControl(new AMap.ToolBar({
+                position: 'RB'
+            }));
+            
+            // 添加比例尺
+            map.addControl(new AMap.Scale({
+                position: 'LB'
+            }));
+            
+            // 添加地图类型切换
+            map.addControl(new AMap.MapType({
+                position: 'RT',
+                defaultType: 0,
+                showRoad: true,
+                showLabel: true
+            }));
+            
+            // 添加定位控件
+            map.addControl(new AMap.Geolocation({
+                position: 'RB',
+                offset: new AMap.Pixel(10, 60),
+                showButton: true,
+                buttonPosition: 'RB',
+                buttonOffset: new AMap.Pixel(10, 60),
+                showMarker: true,
+                markerOptions: {
+                    icon: 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png',
+                    offset: new AMap.Pixel(-12, -36)
+                },
+                showCircle: true
+            }));
+            
+            // 添加鹰眼地图
+            map.addControl(new AMap.HawkEye({
+                position: 'RB',
+                offset: new AMap.Pixel(10, 110),
+                isOpen: false,
+                mapStyle: 'amap://styles/dark'
+            }));
+            
+            // 添加3D控制器
+            map.addControl(new AMap.ControlBar({
+                position: {
+                    right: '10px',
+                    top: '10px'
+                },
+                showZoomBar: true,
+                showControlButton: true
+            }));
+            
+            // 添加实时交通状况图层
+            var trafficLayer = new AMap.Traffic({
+                zIndex: 10
+            });
+            map.add(trafficLayer);
+            
+            // 添加当前城市天气查询
+            var weather = new AMap.Weather();
+            weather.getLive('{{ location1.split("市")[0] }}市', function(err, data) {
+                if (!err) {
+                    var weatherInfo = document.createElement('div');
+                    weatherInfo.className = 'custom-info weather-info';
+                    weatherInfo.innerHTML = '<h4>天气信息</h4>' +
+                                          '<p>城市：' + data.city + '</p>' +
+                                          '<p>天气：' + data.weather + '</p>' +
+                                          '<p>温度：' + data.temperature + '℃</p>' +
+                                          '<p>风向：' + data.windDirection + '</p>' +
+                                          '<p>风力：' + data.windPower + ' 级</p>' +
+                                          '<p>湿度：' + data.humidity + '%</p>';
+                    document.querySelector('.app-container').appendChild(weatherInfo);
+                }
+            });
+            
+            // 显示道路名称
+            map.plugin(["AMap.RoadNet"], function() {
+                var roadNet = new AMap.RoadNet({
+                    zIndex: 10,
+                    showLabel: true  // 显示道路名称
+                });
+                map.add(roadNet);
+            });
+            
+            // 添加城市地区数据
+            map.plugin(["AMap.DistrictSearch"], function() {
+                var districtSearch = new AMap.DistrictSearch({
+                    level: "city",
+                    showbiz: true   // 显示城市商业区底图
+                });
+                districtSearch.search("{{ location1.split('市')[0] }}", function(status, result) {
+                    if (status === 'complete') {
+                        var data = result.districtList[0];
+                        if (data) {
+                            // 显示城市边界
+                            var boundaries = data.boundaries;
+                            if (boundaries) {
+                                var polygons = [];
+                                for (var i = 0; i < boundaries.length; i++) {
+                                    var polygon = new AMap.Polygon({
+                                        path: boundaries[i],
+                                        strokeColor: '#0091ff',
+                                        strokeWeight: 1,
+                                        fillColor: '#f5f5f5',
+                                        fillOpacity: 0.1
+                                    });
+                                    polygons.push(polygon);
+                                }
+                                map.add(polygons);
+                            }
+                        }
+                    }
+                });
+            });
+            
+            // 初始化室内地图
+            var indoorMap = new AMap.IndoorMap();
+            map.add(indoorMap);
+            
+            // 添加测距工具
+            var rangingTool = new AMap.RangingTool(map);
+            var ranging = false;
+            
+            // 添加测距按钮
+            var rangingBtn = document.createElement('button');
+            rangingBtn.className = 'custom-btn ranging-btn';
+            rangingBtn.innerHTML = '开始测距';
+            rangingBtn.onclick = function() {
+                if (!ranging) {
+                    rangingTool.turnOn();
+                    ranging = true;
+                    this.innerHTML = '结束测距';
+                } else {
+                    rangingTool.turnOff();
+                    ranging = false;
+                    this.innerHTML = '开始测距';
+                }
+            };
+            document.querySelector('.app-container').appendChild(rangingBtn);
+        });
+        
+        // 添加周边POI搜索，显示更多地标
+        var placeSearch = new AMap.PlaceSearch({
+            map: map,
+            extensions: 'all',
+            autoFitView: false
+        });
+        
+        // 搜索周边的酒店、商场、学校等地标
+        var searchTypes = ['餐馆', '商场', '公交站', '学校', '医院'];
+        var centerPoint = [(parseFloat("{{ location1_geo.longitude }}".replace(/[^\d.-]/g, '')) + parseFloat("{{ location2_geo.longitude }}".replace(/[^\d.-]/g, ''))) / 2, 
+                           (parseFloat("{{ location1_geo.latitude }}".replace(/[^\d.-]/g, '')) + parseFloat("{{ location2_geo.latitude }}".replace(/[^\d.-]/g, ''))) / 2];
+        
+        // 当地图加载完成后，搜索周边POI
+        map.on('complete', function() {
+            // 随机选择一种类型搜索，避免过多请求
+            var randomType = searchTypes[Math.floor(Math.random() * searchTypes.length)];
+            placeSearch.searchNearBy(randomType, centerPoint, 1000);
+        });
+        
+        // 定义地点坐标 - 确保数字格式正确
+        var location1Pos = [parseFloat("{{ location1_geo.longitude }}".replace(/[^\d.-]/g, '')), 
+                            parseFloat("{{ location1_geo.latitude }}".replace(/[^\d.-]/g, ''))];
+        var location2Pos = [parseFloat("{{ location2_geo.longitude }}".replace(/[^\d.-]/g, '')), 
+                            parseFloat("{{ location2_geo.latitude }}".replace(/[^\d.-]/g, ''))];
+        
+        console.log('起点坐标:', location1Pos);
+        console.log('终点坐标:', location2Pos);
+        
+        // 添加地点1标记
+        var location1Marker = new AMap.Marker({
+            position: location1Pos,
+            title: '{{ location1 }}',
+            icon: '/static/images/icons/marker_start.svg',
+            label: {
+                content: '{{ location1 }}',
+                direction: 'right',
+                offset: new AMap.Pixel(10, 0)
+            }
+        });
+        map.add(location1Marker);
+        
+        // 添加地点2标记
+        var location2Marker = new AMap.Marker({
+            position: location2Pos,
+            title: '{{ location2 }}',
+            icon: '/static/images/icons/marker_end.svg',
+            label: {
+                content: '{{ location2 }}',
+                direction: 'right',
+                offset: new AMap.Pixel(10, 0)
+            }
+        });
+        map.add(location2Marker);
+        
+        // 添加POI标记
+        {% if pois and pois|length > 0 %}
+            var poiMarkers = [];
+            var infoWindows = [];
+            var activeInfoWindow = null;
+            
+            {% for poi in pois %}
+                var poiPos = [parseFloat("{{ poi.location.split(',')[0] }}"), parseFloat("{{ poi.location.split(',')[1] }}")];
+                // 根据POI类型选择合适的图标
+                var iconUrl = '';
+                {% if poi_type == '超市' %}
+                    iconUrl = '/static/images/icons/supermarket.svg';
+                {% elif poi_type == '餐厅' or poi_type == '饭店' %}
+                    iconUrl = '/static/images/icons/restaurant.svg';
+                {% elif poi_type == '咖啡馆' or poi_type == '咖啡' %}
+                    iconUrl = '/static/images/icons/cafe.svg';
+                {% elif poi_type == '银行' %}
+                    iconUrl = '/static/images/icons/default.svg';
+                {% elif poi_type == '加油站' %}
+                    iconUrl = '/static/images/icons/default.svg';
+                {% elif poi_type == '医院' %}
+                    iconUrl = '/static/images/icons/default.svg';
+                {% elif poi_type == '酒店' or poi_type == '宾馆' %}
+                    iconUrl = '/static/images/icons/default.svg';
+                {% elif poi_type == '学校' %}
+                    iconUrl = '/static/images/icons/default.svg';
+                {% elif poi_type == '药店' or poi_type == '药房' %}
+                    iconUrl = '/static/images/icons/default.svg';
+                {% else %}
+                    iconUrl = '/static/images/icons/default.svg';
+                {% endif %}
+                
+                var marker = new AMap.Marker({
+                    position: poiPos,
+                    title: '{{ poi.name }}',
+                    icon: iconUrl,
+                    label: {
+                        content: '{{ poi.name|truncate(10, True, "...") }}',
+                        direction: 'right',
+                        offset: new AMap.Pixel(10, 0)
+                    },
+                    extData: {
+                        id: '{{ loop.index }}',
+                        name: '{{ poi.name }}',
+                        type: '{{ poi_type }}'
+                    }
+                });
+                
+                // 添加信息窗体
+                var content = '<div class="info-window">' +
+                              {% if poi.photo_url %}
+                              '<div class="poi-image"><img src="{{ poi.photo_url }}" alt="{{ poi.name }}实景图" style="width:100%; max-height:150px; object-fit:cover; border-radius:4px; margin-bottom:10px;"></div>' +
+                              {% endif %}
+                              '<h3>{{ poi.name }}</h3>' +
+                              '<p>地址：{{ poi.address }}</p>' +
+                              {% if poi.tel %}
+                              '<p>电话：{{ poi.tel }}</p>' +
+                              {% else %}
+                              '' +
+                              {% endif %}
+                              {% if poi.business_hours %}
+                              '<p>营业时间：{{ poi.business_hours }}</p>' +
+                              {% endif %}
+                              {% if poi.rating and poi.rating != '暂无评分' %}
+                              '<p>评分：{{ poi.rating }}分 ({{ poi.review_count }}条评论)</p>' +
+                              {% endif %}
+                              {% if poi.tags %}
+                              '<p>特色：{{ poi.tags|join(", ") }}</p>' +
+                              {% endif %}
+                              '<p>从{{ location1 }}乘坐公交/地铁到这里：<b>{{ poi.time_to_location1 }}分钟</b></p>' +
+                              '<p>从{{ location2 }}乘坐公交/地铁到这里：<b>{{ poi.time_to_location2 }}分钟</b></p>' +
+                              '</div>';
+                
+                var infoWindow = new AMap.InfoWindow({
+                    content: content,
+                    offset: new AMap.Pixel(0, -30),
+                    isCustom: false
+                });
+                
+                infoWindows.push({
+                    marker: marker,
+                    infoWindow: infoWindow,
+                    id: '{{ loop.index }}'
+                });
+                
+                marker.on('click', function(e) {
+                    // 关闭当前打开的信息窗体
+                    if (activeInfoWindow) {
+                        activeInfoWindow.close();
+                    }
+                    
+                    // 打开点击的标记的信息窗体
+                    var clickedId = e.target.getExtData().id;
+                    for (var i = 0; i < infoWindows.length; i++) {
+                        if (infoWindows[i].id === clickedId) {
+                            infoWindows[i].infoWindow.open(map, e.target.getPosition());
+                            activeInfoWindow = infoWindows[i].infoWindow;
+                            
+                            // 高亮对应的列表项
+                            highlightListItem(clickedId);
+                            break;
+                        }
+                    }
+                });
+                
+                poiMarkers.push(marker);
+            {% endfor %}
+            
+            // 将所有POI标记添加到地图
+            map.add(poiMarkers);
+            
+            // 添加列表项点击事件
+            function setupListItemClickEvents() {
+                var poiItems = document.querySelectorAll('.poi-item');
+                poiItems.forEach(function(item) {
+                    item.addEventListener('click', function() {
+                        var poiId = this.getAttribute('data-poi-id');
+                        
+                        // 关闭当前打开的信息窗体
+                        if (activeInfoWindow) {
+                            activeInfoWindow.close();
+                        }
+                        
+                        // 打开点击的标记的信息窗体
+                        for (var i = 0; i < infoWindows.length; i++) {
+                            if (infoWindows[i].id === poiId) {
+                                var marker = infoWindows[i].marker;
+                                var position = marker.getPosition();
+                                
+                                // 将地图移动到标记位置
+                                map.setCenter(position);
+                                
+                                // 打开信息窗体
+                                infoWindows[i].infoWindow.open(map, position);
+                                activeInfoWindow = infoWindows[i].infoWindow;
+                                
+                                // 高亮对应的标记
+                                highlightMarker(marker);
+                                
+                                // 高亮对应的列表项
+                                highlightListItem(poiId);
+                                break;
+                            }
+                        }
+                    });
+                });
+            }
+            
+            // 高亮标记
+            function highlightMarker(marker) {
+                // 重置所有标记图标
+                for (var i = 0; i < poiMarkers.length; i++) {
+                    poiMarkers[i].setIcon('https://webapi.amap.com/theme/v1.3/markers/n/mark_g.png');
+                }
+                
+                // 高亮选中的标记
+                marker.setIcon('https://webapi.amap.com/theme/v1.3/markers/n/mark_y.png');
+            }
+            
+            // 高亮列表项
+            function highlightListItem(id) {
+                // 重置所有列表项样式
+                var poiItems = document.querySelectorAll('.poi-item');
+                poiItems.forEach(function(item) {
+                    item.classList.remove('active');
+                });
+                
+                // 高亮选中的列表项
+                var selectedItem = document.querySelector('.poi-item[data-poi-id="' + id + '"]');
+                if (selectedItem) {
+                    selectedItem.classList.add('active');
+                    selectedItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }
+            
+            // 页面加载完成后设置列表项点击事件
+            window.addEventListener('load', function() {
+                setupListItemClickEvents();
+                setupSidebarToggle();
+                setupSearchFilter();
+            });
+            
+            // 设置侧边栏切换功能
+            function setupSidebarToggle() {
+                var toggleSidebar = document.querySelector('.toggle-sidebar');
+                var appContainer = document.querySelector('.app-container');
+                
+                toggleSidebar.addEventListener('click', function() {
+                    appContainer.classList.toggle('sidebar-collapsed');
+                    // 触发地图resize事件，确保地图正确显示
+                    setTimeout(function() {
+                        map.resize();
+                    }, 300);
+                });
+            }
+            
+            // 设置搜索过滤功能
+            function setupSearchFilter() {
+                var searchInput = document.getElementById('poi-search');
+                searchInput.addEventListener('input', function() {
+                    var searchText = this.value.toLowerCase();
+                    
+                    var poiItems = document.querySelectorAll('.poi-item');
+                    poiItems.forEach(function(item) {
+                        var poiName = item.querySelector('.poi-name').textContent.toLowerCase();
+                        var poiAddress = item.querySelector('.poi-address').textContent.toLowerCase();
+                        
+                        if (poiName.includes(searchText) || poiAddress.includes(searchText)) {
+                            item.style.display = 'block';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                });
+            }
+        {% endif %}
+        
+        // 显示道路名称
+        map.plugin(['AMap.RoadNet'], function() {
+            var roadNet = new AMap.RoadNet({
+                zIndex: 400,
+                showRoadName: true,  // 显示道路名称
+                roadNameZIndex: 500,  // 提高道路名称的显示层级
+                visibleLabelEnable: true  // 确保名称可见
+            });
+            map.add(roadNet);
+        });
+        
+        // 设置地图样式为带标注的模式
+        map.setMapStyle('amap://styles/macaron'); // 使用马卡龙样式，标注更明显
+        
+        // 启用标注图层
+        map.setLabelzIndex(1000);
+        
+        // 设置地图中心为指定城市
+        map.setCity('{{ location1.split("市")[0] }}');
+        
+        // 显示主要道路编号
+        map.plugin(['AMap.DistrictSearch'], function() {
+            var districtSearch = new AMap.DistrictSearch({
+                level: 'district',
+                showbiz: false
+            });
+            
+            // 搜索当前城市的行政区划
+            districtSearch.search('北京市', function(status, result) {
+                if (status === 'complete') {
+                    var boundaries = result.districtList[0].boundaries;
+                    var polygons = [];
+                    for (var i = 0; i < boundaries.length; i++) {
+                        // 生成行政区划多边形
+                        var polygon = new AMap.Polygon({
+                            path: boundaries[i],
+                            strokeColor: '#E0E0E0',  // 浅灰色边框
+                            strokeWeight: 1,         // 更细的边框
+                            fillOpacity: 0.02,       // 非常低的不透明度
+                            fillColor: '#F5F5F5',    // 浅灰色填充
+                            zIndex: 2
+                        });
+                        polygons.push(polygon);
+                    }
+                    map.add(polygons);
+                }
+            });
+        });
+        
+        // 绘制两个地点之间的路线
+        function drawRoute() {
+            console.log('开始绘制路线，起点:', location1Pos, '终点:', location2Pos);
+            
+            // 直接绘制一条连接两点的线，确保至少有这个显示
+            var simpleLine = new AMap.Polyline({
+                path: [location1Pos, location2Pos],
+                strokeColor: '#3366FF',  // 蓝色
+                strokeWeight: 6,         // 线宽
+                strokeOpacity: 0.8,      // 透明度
+                strokeStyle: 'solid',    // 实线
+                zIndex: 50              // 确保在最上层
+            });
+            map.add(simpleLine);
+            
+            // 创建驾车实例
+            var drivingOption = {
+                map: map,
+                hideMarkers: true,
+                showTraffic: true,  // 显示交通情况
+                policy: AMap.DrivingPolicy.LEAST_TIME  // 最快捷模式
+            };
+            
+            var driving = new AMap.Driving(drivingOption);
+            
+            // 搜索驾车路线
+            driving.search(location1Pos, location2Pos, function(status, result) {
+                if (status === 'complete') {
+                    console.log('绘制驾车路线完成');
+                    
+                    // 添加步行路线，使用不同颜色
+                    var walkingOption = {
+                        map: map,
+                        hideMarkers: true
+                    };
+                    
+                    var walking = new AMap.Walking(walkingOption);
+                    walking.search(location1Pos, location2Pos);
+                } else {
+                    console.log('驾车路线失败，尝试步行路线');
+                    // 如果驾车路线失败，尝试步行路线
+                    var walking = new AMap.Walking({
+                        map: map,
+                        hideMarkers: true
+                    });
+                    
+                    walking.search(location1Pos, location2Pos, function(walkStatus, walkResult) {
+                        if (walkStatus === 'complete') {
+                            console.log('绘制步行路线完成');
+                        } else {
+                            console.log('步行路线也失败了');
+                        }
+                    });
+                }
+            });
+        }
+        
+        // 等待地图加载完成后再绘制路线和设置视图
+        map.on('complete', function() {
+            console.log('地图加载完成，开始绘制路线');
+            // 调用函数绘制路线
+            drawRoute();
+            
+            // 确保所有标记都显示在地图上
+            setTimeout(function() {
+                try {
+                    var allMarkers = [location1Marker, location2Marker];
+                    if (poiMarkers && poiMarkers.length > 0) {
+                        allMarkers = allMarkers.concat(poiMarkers);
+                    }
+                    map.setFitView(allMarkers);
+                    console.log('设置地图视图包含所有标记');
+                } catch(e) {
+                    console.error('设置地图视图出错:', e);
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地点间POI查询</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Noto Sans SC', Arial, sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(5px);
+            transform: translateY(0);
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 700;
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #3498db, #2c3e50);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+            opacity: 0;
+            animation: slideUp 0.5s forwards;
+        }
+        
+        .form-group:nth-child(1) { animation-delay: 0.1s; }
+        .form-group:nth-child(2) { animation-delay: 0.2s; }
+        .form-group:nth-child(3) { animation-delay: 0.3s; }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #34495e;
+            font-size: 1rem;
+        }
+        
+        input[type="text"], select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            background-color: white;
+            transition: all 0.3s ease;
+            color: #2c3e50;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        input[type="text"]:focus, select:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 2px 10px rgba(52, 152, 219, 0.2);
+        }
+        
+        button {
+            background: linear-gradient(to right, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 16px 20px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+            opacity: 0;
+            animation: fadeIn 0.5s forwards, pulse 1.5s 0.5s infinite alternate;
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+            }
+            100% {
+                transform: scale(1.02);
+                box-shadow: 0 7px 15px rgba(52, 152, 219, 0.4);
+            }
+        }
+        
+        button:hover {
+            background: linear-gradient(to right, #2980b9, #2c3e50);
+            transform: translateY(-2px);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 5px rgba(52, 152, 219, 0.3);
+        }
+        
+        .examples {
+            margin-top: 40px;
+            padding-top: 25px;
+            border-top: 2px solid rgba(52, 152, 219, 0.2);
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+            animation-delay: 0.6s;
+        }
+        
+        .examples h3 {
+            color: #2c3e50;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .example-item {
+            background-color: rgba(236, 240, 241, 0.6);
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3498db;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .example-item:hover {
+            background-color: rgba(236, 240, 241, 0.9);
+            transform: translateX(5px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .example-item p {
+            margin: 5px 0;
+        }
+        
+        .example-item strong {
+            color: #34495e;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>地点间POI查询</h1>
+        
+        <form action="/search_between_locations" method="get">
+            <div class="form-group">
+                <label for="location1">地点1:</label>
+                <input type="text" id="location1" name="location1" placeholder="例如：北京西站" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="location2">地点2:</label>
+                <input type="text" id="location2" name="location2" placeholder="例如：天安门" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="poi_type">场所类型:</label>
+                <select id="poi_type" name="poi_type" required>
+                    <option value="">-- 请选择 --</option>
+                    <option value="书店">书店</option>
+                    <option value="咖啡馆">咖啡馆</option>
+                    <option value="商场">商场</option>
+                    <option value="餐厅">餐厅</option>
+                    <option value="电影院">电影院</option>
+                    <option value="公园">公园</option>
+                    <option value="超市">超市</option>
+                    <option value="药店">药店</option>
+                    <option value="银行">银行</option>
+                </select>
+            </div>
+            
+            <button type="submit">查询</button>
+        </form>
+        
+        <div class="examples">
+            <h3>示例查询:</h3>
+            <div class="example-item">
+                <p><strong>地点1:</strong> 北京西站</p>
+                <p><strong>地点2:</strong> 天安门</p>
+                <p><strong>场所类型:</strong> 咖啡馆</p>
+            </div>
+            <div class="example-item">
+                <p><strong>地点1:</strong> 上海虹桥站</p>
+                <p><strong>地点2:</strong> 外滩</p>
+                <p><strong>场所类型:</strong> 商场</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
