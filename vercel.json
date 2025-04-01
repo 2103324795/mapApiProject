@@ -1,12 +1,16 @@
 {
+  "version": 2,
   "builds": [
     {
-      "src": "app.py",
+      "src": "index.py",
       "use": "@vercel/python",
       "config": {
-        "maxLambdaSize": "15mb",
-        "runtime": "python3.9"
+        "maxLambdaSize": "30mb"
       }
+    },
+    {
+      "src": "static/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
@@ -16,7 +20,10 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/app.py"
+      "dest": "/index.py"
     }
-  ]
+  ],
+  "env": {
+    "AMAP_KEY": "46f8aebbd7c81272533debc531a7bfbd"
+  }
 }

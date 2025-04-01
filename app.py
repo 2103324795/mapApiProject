@@ -11,12 +11,15 @@ load_dotenv()
 # 创建Flask应用，指定静态文件目录
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 
+# Vercel需要的配置
+app.config['JSON_AS_ASCII'] = False
+
 # 获取高德地图API密钥
 AMAP_KEY = os.getenv('AMAP_KEY')
 
 # 如果没有设置API密钥，使用默认值（实际使用时请替换为你的密钥）
 if not AMAP_KEY:
-    AMAP_KEY = "请替换为你的高德地图API密钥"
+    AMAP_KEY = "46f8aebbd7c81272533debc531a7bfbd"
 
 @app.route('/')
 def index():
